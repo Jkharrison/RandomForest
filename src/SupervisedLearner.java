@@ -38,6 +38,10 @@ abstract class SupervisedLearner
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
+	String name()
+	{
+		return "DecisionTree";
+	}
 	int[] pickDividingColumnAndPivot(Matrix feat)
 	{
 		int col = rand.next(feat.cols());
