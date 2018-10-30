@@ -41,9 +41,9 @@ class Main
 		//testLearner(new RandomForest(50));
 	}
 }
-abstract class Node 
+abstract class Node
 {
-	abstract boolean isLeft();
+	abstract boolean isLeaf();
 }
 class InteriorNode extends Node
 {
@@ -51,15 +51,26 @@ class InteriorNode extends Node
 	double pivot;	// which value to divide on
 	Node a;
 	Node b;
-	boolean isLeft() 
+	InteriorNode(Node one, Node two, int i , double p)
+	{
+		this.a = one;
+		this.b = two;
+		this.attribute = i;
+		this.pivot = p;
+	}
+	boolean isLeaf()
 	{
 		return false;
 	}
 }
-class LeafNode extends Node 
+class LeafNode extends Node
 {
-	double[] label;
-	boolean isLeaf() 
+	double[] labels;
+	LeafNode(double[] labs)
+	{
+		this.labels = labs;
+	}
+	boolean isLeaf()
 	{
 		return true;
 	}
