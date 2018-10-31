@@ -72,24 +72,24 @@ class DecisionTree extends SupervisedLearner
 		for(int i = 8; i > 0; i--)
 		{
 			int vals = feat.valueCount(col);
-			Matrix featLeft(feat);
-			Matrix featRight(feat);
-			Matrix labLeft(feat);
-			Matrix labRight(feat);
+			Matrix featLeft = new Matrix(feat);
+			Matrix featRight = new Matrix(feat);
+			Matrix labLeft = new Matrix(feat);
+			Matrix labRight = new Matrix(feat);
 			// Loop to divide data.
-			for(int i = 0; i < feat.rows(); i++)
+			for(int j = 0; j < feat.rows(); j++)
 			{	// Continuous
 				if(vals == 0)
 				{
-					if(feat[i][col]) < pivot)
+					if(feat[j][col] < pivot)
 					{
-						featLeft.takeRow(feat.removeRow(i));
-						labLeft.takeRow(feat.removeRow(i));
+						featLeft.takeRow(feat.removeRow(j));
+						labLeft.takeRow(feat.removeRow(j));
 					}
 					else
 					{
-						featRight.takeRow(feat.removeRow(i));
-						labRight.takeRow(feat.removeRow(i));
+						featRight.takeRow(feat.removeRow(j));
+						labRight.takeRow(feat.removeRow(j));
 					}
 				}
 				else // Categorical
