@@ -96,14 +96,12 @@ class LeafNode extends Node
 	{
 		this.labels = null;
 	}
-	LeafNode(Matrix labels)
+	LeafNode(Matrix Labels)
 	{
-		double[] temp = new double[0];
-		for(int i = 0; i < labels.cols(); i++)
+		for(int i = 0; i < Labels.cols(); i++)
 		{
-			temp = Vec.concatenate(temp, labels.row(i));
+			this.labels = Vec.concatenate(labels, Labels.row(i));
 		}
-		this.labels = temp;
 	}
 	LeafNode(double[] labs)
 	{
