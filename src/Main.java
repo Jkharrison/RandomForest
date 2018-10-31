@@ -38,12 +38,18 @@ class Main
 	public static void main(String[] args)
 	{
 		testLearner(new BaselineLearner());
+		testLearner(new DecisionTree());
 		//testLearner(new RandomForest(50));
 	}
 }
 abstract class Node
 {
 	abstract boolean isLeaf();
+	abstract Node getA();
+	abstract Node getB();
+	abstract int getAttribute();
+	abstract double getPivot();
+	abstract double[] getLabels();
 }
 class InteriorNode extends Node
 {
@@ -62,10 +68,43 @@ class InteriorNode extends Node
 	{
 		return false;
 	}
+	Node getA()
+	{
+		return this.a;
+	}
+	Node getB()
+	{
+		return this.b;
+	}
+	int getAttribute()
+	{
+		return this.attribute;
+	}
+	double getPivot()
+	{
+		return this.pivot;
+	}
+	double[] getLabels()
+	{
+		return null;
+	}
 }
 class LeafNode extends Node
 {
 	double[] labels;
+	LeafNode()
+	{
+		this.labels = null;
+	}
+	LeafNode(Matrix labels)
+	{
+		double[] temp = new double[0];
+		for(int i = 0; i < labels.cols(); i++)
+		{
+			temp = Vec.concatenate(temp, labels.row(i));
+		}
+		this.labels = temp;
+	}
 	LeafNode(double[] labs)
 	{
 		this.labels = labs;
@@ -74,4 +113,23 @@ class LeafNode extends Node
 	{
 		return true;
 	}
-}
+	Node getA()
+	{
+		return null;
+	}
+	Node getB()
+	{
+		return null;
+	}
+	int getAttribute()
+	{
+		return -1;
+	}
+	double getPivot() {
+		return -1;
+	}
+	double[] getLabels()
+	{
+		return this.labels;
+	}
+ }

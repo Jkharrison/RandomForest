@@ -2,7 +2,7 @@
 // The contents of this file are distributed under the CC0 license.
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
-
+import java.util.Random;
 abstract class SupervisedLearner
 {
 	/// Return the name of this learner
@@ -38,27 +38,28 @@ abstract class SupervisedLearner
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
+	static Random rand = new Random();
 	String name()
 	{
 		return "DecisionTree";
 	}
-	int[] pickDividingColumnAndPivot(Matrix feat)
-	{
-		int col = rand.next(feat.cols());
-		int row = rand.next(feat.rows());
-		double pivot = feat[row][col];
-		return new int[] {col, pivot};
-	}
+	// int[] pickDividingColumnAndPivot(Matrix feat)
+	// {
+	// 	int col = rand.next(feat.cols());
+	// 	int row = rand.next(feat.rows());
+	// 	double pivot = feat.row(row)[col];
+	// 	return new int[] {col, pivot};
+	// }
 	int pickDividingColumn(Matrix feat)
 	{
-		int col = rand.next(feat.cols());
+		int col = rand.nextInt(feat.cols());
 		return col;
 	}
 	double pickPivot(Matrix feat)
 	{
-		int col = rand.next(feat.cols());
-		int row = rand.next(feat.rows());
-		double pivot = feat[row][col];
+		int col = rand.nextInt(feat.cols());
+		int row = rand.nextInt(feat.rows());
+		double pivot = feat.row(row)[col];
 		return pivot;
 	}
 	Node buildTree(Matrix feat, Matrix labels)
@@ -69,32 +70,42 @@ class DecisionTree extends SupervisedLearner
 		double pivot = pickPivot(feat);
 
 		// Divide the data.
-		for(int i = 8; i > 0; i--)
+		Matrix featLeft = new Matrix(feat);
+		Matrix featRight = new Matrix(feat);
+		Matrix labLeft = new Matrix(labels);
+		Matrix labRight = new Matrix(labels);
+		for(int j = 8; j > 0; j--) // This number 8 is subject to change.
 		{
 			int vals = feat.valueCount(col);
-			Matrix featLeft(feat);
-			Matrix featRight(feat);
-			Matrix labLeft(feat);
-			Matrix labRight(feat);
 			// Loop to divide data.
 			for(int i = 0; i < feat.rows(); i++)
 			{	// Continuous
 				if(vals == 0)
 				{
-					if(feat[i][col]) < pivot)
+					if(feat.row(i)[col] < pivot) // TODO: Find out how to access this value.
 					{
 						featLeft.takeRow(feat.removeRow(i));
-						labLeft.takeRow(feat.removeRow(i));
+						labLeft.takeRow(labels.removeRow(i));
 					}
 					else
 					{
 						featRight.takeRow(feat.removeRow(i));
-						labRight.takeRow(feat.removeRow(i));
+						labRight.takeRow(labels.removeRow(i));
 					}
 				}
 				else // Categorical
 				{
 					// Divide on categorical values
+					if(feat.row(i)[col] == pivot)
+					{
+						featLeft.takeRow(feat.removeRow(i));
+						labLeft.takeRow(labels.removeRow(i));
+					}
+					else
+					{
+						featRight.takeRow(feat.removeRow(i));
+						labRight.takeRow(labels.removeRow(i));
+					}
 				}
 			}
 			// LeafNode case
@@ -118,17 +129,33 @@ class DecisionTree extends SupervisedLearner
 		Node n = root;
 		while(true)
 		{
-			if(!n.isLeaf())
+			if(!n.isLeaf()) // This means the Node is an InterioNode
 			{
-				if(feat[n.col] < n.pivot)
-					n = n.a;
+				if(in[n.getAttribute()] < n.getPivot())
+					n = n.getA();
 				else
-					n = n.b;
+					n = n.getB();
 			}
 			else
 			{
-				return n.labels;
+				Vec.copy(out, n.getLabels());
+				// return n.labels;
 			}
 		}
+	}
+}
+class RandomForest extends SupervisedLearner
+{
+	String name()
+	{
+		return "RandomForest";
+	}
+	void train(Matrix features, Matrix labels)
+	{
+
+	}
+	void predict(double[] in, double[] out)
+	{
+
 	}
 }
