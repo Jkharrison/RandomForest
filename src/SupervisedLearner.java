@@ -78,7 +78,7 @@ class DecisionTree extends SupervisedLearner
 		{
 			int vals = feat.valueCount(col);
 			// Loop to divide data.
-			for(int i = 0; i < feat.rows(); i++)
+			for(int j = 0; j < feat.rows(); j++)
 			{	// Continuous
 				if(vals == 0)
 				{
