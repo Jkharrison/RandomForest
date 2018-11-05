@@ -2,7 +2,8 @@
 // The contents of this file are distributed under the CC0 license.
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
-
+import java.util.ArrayList;
+// import org.apache.commons.lang3.ArrayUtils;
 class Main
 {
 	static void test(SupervisedLearner learner, String challenge)
@@ -39,7 +40,7 @@ class Main
 	{
 		testLearner(new BaselineLearner());
 		testLearner(new DecisionTree());
-		//testLearner(new RandomForest(50));
+		//testLearner(new RandomForest(30));
 	}
 }
 abstract class Node
@@ -59,6 +60,7 @@ class InteriorNode extends Node
 	Node b;
 	InteriorNode(Node one, Node two, int i , double p)
 	{
+		// System.out.println("Creating new Interior Node");
 		this.a = one;
 		this.b = two;
 		this.attribute = i;
@@ -98,10 +100,31 @@ class LeafNode extends Node
 	}
 	LeafNode(Matrix Labels)
 	{
-		for(int i = 0; i < Labels.cols(); i++)
+		// System.out.println("Creating new leaf node from Matrix parameter");
+		// TODO: Combine K label vectors into one label vector
+		// TODO: Implementation below is also incorrect.
+		ArrayList<Double> kVectors = new ArrayList<>();
+		for(int i = 0; i < Labels.rows(); i++)
 		{
-			this.labels = Vec.concatenate(labels, Labels.row(i));
+			for(int j = 0; j < Labels.row(i).length; j++)
+			{
+				kVectors.add(Labels.row(i)[j]);
+			}
 		}
+		Double[] temp = new Double[kVectors.size()];
+		Double[] result = kVectors.toArray(temp);
+		this.labels = new double[result.length];
+		for(int i = 0; i < result.length; i++)
+		{
+			this.labels[i] = (double)result[i];
+		}
+//		for(int i = 0; i < Labels.rows(); i++)
+//		{
+//			// System.out.println("Length of temp is: " + temp.length);
+//			temp = Vec.concatenate(temp, Labels.row(i)); // NOTE: Might be causing the terribleness of my Decision Tree. xD
+//		}
+		// this.labels = temp;
+		// System.out.println("Labels.length = " + this.labels.length);
 	}
 	LeafNode(double[] labs)
 	{
@@ -123,7 +146,8 @@ class LeafNode extends Node
 	{
 		return -1;
 	}
-	double getPivot() {
+	double getPivot() 
+	{
 		return -1;
 	}
 	double[] getLabels()

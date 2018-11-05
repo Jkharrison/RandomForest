@@ -52,12 +52,14 @@ class DecisionTree extends SupervisedLearner
 	// }
 	int pickDividingColumn(Matrix feat)
 	{
+		rand.setSeed(25);
 		int col = rand.nextInt(feat.cols());
 		return col;
 	}
 	double pickPivot(Matrix feat)
 	{
 		int col = rand.nextInt(feat.cols());
+		rand.setSeed(75);
 		int row = rand.nextInt(feat.rows());
 		double pivot = feat.row(row)[col];
 		return pivot;
@@ -74,15 +76,19 @@ class DecisionTree extends SupervisedLearner
 		Matrix featRight = new Matrix(feat);
 		Matrix labLeft = new Matrix(labels);
 		Matrix labRight = new Matrix(labels);
-		for(int j = 8; j > 0; j--) // This number 8 is subject to change.
+		for(int j = 12; j > 0; j--) // This number 8 is subject to change.
 		{
 			int vals = feat.valueCount(col);
 			// Loop to divide data.
-			for(int j = 0; j < feat.rows(); j++)
+			featLeft = new Matrix(feat);
+			featRight = new Matrix(feat);
+			labLeft = new Matrix(labels);
+			labRight = new Matrix(labels);
+			for(int i = 0; i < feat.rows(); i++)
 			{	// Continuous
 				if(vals == 0)
 				{
-					if(feat.row(i)[col] < pivot) // TODO: Find out how to access this value.
+					if(feat.row(i)[col] < pivot)
 					{
 						featLeft.takeRow(feat.removeRow(i));
 						labLeft.takeRow(labels.removeRow(i));
@@ -110,11 +116,18 @@ class DecisionTree extends SupervisedLearner
 			}
 			// LeafNode case
 			if(featLeft.rows() == 0 || featRight.rows() == 0)
-				 break;//return new LeafNode(labels); // Similar to BaseLineLearner training.
+			{
+				// System.out.println("Bad split");
+				break;//return new LeafNode(labels); // Similar to BaseLineLearner training.
+			}
 		}
 		if(featLeft.rows() == 0 || featRight.rows() == 0)
+		{
+			// System.out.println("Bad split but creating leaf node");
 			return new LeafNode(labels);
+		}
 		// Make the node
+		// System.out.println("Not ending train method");
 		Node left = buildTree(featLeft, labLeft);
 		Node right = buildTree(featRight, labRight);
 		return new InteriorNode(left, right, col, pivot);
@@ -129,7 +142,8 @@ class DecisionTree extends SupervisedLearner
 		Node n = root;
 		while(true)
 		{
-			if(!n.isLeaf()) // This means the Node is an InterioNode
+			// System.out.println("Not breaking in this loop");
+			if(!n.isLeaf()) // This means the Node is an InteriorNode
 			{
 				if(in[n.getAttribute()] < n.getPivot())
 					n = n.getA();
@@ -139,6 +153,7 @@ class DecisionTree extends SupervisedLearner
 			else
 			{
 				Vec.copy(out, n.getLabels());
+				break;
 				// return n.labels;
 			}
 		}
@@ -146,6 +161,11 @@ class DecisionTree extends SupervisedLearner
 }
 class RandomForest extends SupervisedLearner
 {
+	DecisionTree[] trees;
+	RandomForest(int n)
+	{
+		this.trees = new DecisionTree[n];
+	}
 	String name()
 	{
 		return "RandomForest";
