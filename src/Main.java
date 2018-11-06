@@ -103,21 +103,16 @@ class LeafNode extends Node
 		// System.out.println("Creating new leaf node from Matrix parameter");
 		// TODO: Combine K label vectors into one label vector
 		// TODO: Implementation below is also incorrect.
-		ArrayList<Double> kVectors = new ArrayList<>();
-		for(int i = 0; i < Labels.rows(); i++)
+		double[] temp = new double[Labels.cols()];
+		// System.out.println("Temp's Length: " + temp.length);
+		for(int i = 0; i < Labels.cols(); i++)
 		{
-			for(int j = 0; j < Labels.row(i).length; j++)
-			{
-				kVectors.add(Labels.row(i)[j]);
-			}
+			if(Labels.valueCount(i) == 0)
+				temp[i] = Labels.columnMean(i);
+			else
+				temp[i] = Labels.mostCommonValue(i);
 		}
-		Double[] temp = new Double[kVectors.size()];
-		Double[] result = kVectors.toArray(temp);
-		this.labels = new double[result.length];
-		for(int i = 0; i < result.length; i++)
-		{
-			this.labels[i] = (double)result[i];
-		}
+		this.labels = temp;
 //		for(int i = 0; i < Labels.rows(); i++)
 //		{
 //			// System.out.println("Length of temp is: " + temp.length);
@@ -146,7 +141,7 @@ class LeafNode extends Node
 	{
 		return -1;
 	}
-	double getPivot() 
+	double getPivot()
 	{
 		return -1;
 	}

@@ -38,29 +38,27 @@ abstract class SupervisedLearner
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
+	Matrix features;
 	static Random rand = new Random();
 	String name()
 	{
 		return "DecisionTree";
 	}
-	// int[] pickDividingColumnAndPivot(Matrix feat)
-	// {
-	// 	int col = rand.next(feat.cols());
-	// 	int row = rand.next(feat.rows());
-	// 	double pivot = feat.row(row)[col];
-	// 	return new int[] {col, pivot};
-	// }
 	int pickDividingColumn(Matrix feat)
 	{
 		rand.setSeed(25);
 		int col = rand.nextInt(feat.cols());
 		return col;
 	}
-	double pickPivot(Matrix feat)
+	double pickPivot(Matrix feat, int col)
 	{
-		int col = rand.nextInt(feat.cols());
-		rand.setSeed(75);
-		int row = rand.nextInt(feat.rows());
+		// rand.setSeed(75);
+		// System.out.println(feat.rows());
+		int row;
+		if(feat.rows() > 0)
+			row = rand.nextInt(feat.rows());
+		else
+			row = 0;
 		double pivot = feat.row(row)[col];
 		return pivot;
 	}
@@ -68,35 +66,45 @@ class DecisionTree extends SupervisedLearner
 	{
 		if(feat.rows() != labels.rows())
 			throw new IllegalArgumentException("Mismatching features and labels");
-		int col = pickDividingColumn(feat);// Continuous or Categorical
-		double pivot = pickPivot(feat);
-
+		int col = 0; // Continuous or Categorical
+		double pivot = 0.0;
+		this.features = feat;
 		// Divide the data.
 		Matrix featLeft = new Matrix(feat);
+		featLeft.copyMetaData(feat);
 		Matrix featRight = new Matrix(feat);
+		featRight.copyMetaData(feat);
 		Matrix labLeft = new Matrix(labels);
+		labLeft.copyMetaData(labels);
 		Matrix labRight = new Matrix(labels);
+		labRight.copyMetaData(labels);
 		for(int j = 12; j > 0; j--) // This number 8 is subject to change.
 		{
+			// col = pickDividingColumn(feat);
+			pivot = pickPivot(feat, col);
 			int vals = feat.valueCount(col);
 			// Loop to divide data.
 			featLeft = new Matrix(feat);
+			featLeft.copyMetaData(feat);
 			featRight = new Matrix(feat);
+			featRight.copyMetaData(feat);
 			labLeft = new Matrix(labels);
+			labLeft.copyMetaData(labels);
 			labRight = new Matrix(labels);
+			labRight.copyMetaData(labels);
 			for(int i = 0; i < feat.rows(); i++)
 			{	// Continuous
 				if(vals == 0)
 				{
 					if(feat.row(i)[col] < pivot)
 					{
-						featLeft.takeRow(feat.removeRow(i));
-						labLeft.takeRow(labels.removeRow(i));
+						featLeft.takeRow(feat.row(i));
+						labLeft.takeRow(labels.row(i));
 					}
 					else
 					{
-						featRight.takeRow(feat.removeRow(i));
-						labRight.takeRow(labels.removeRow(i));
+						featRight.takeRow(feat.row(i));
+						labRight.takeRow(labels.row(i));
 					}
 				}
 				else // Categorical
@@ -104,26 +112,26 @@ class DecisionTree extends SupervisedLearner
 					// Divide on categorical values
 					if(feat.row(i)[col] == pivot)
 					{
-						featLeft.takeRow(feat.removeRow(i));
-						labLeft.takeRow(labels.removeRow(i));
+						featLeft.takeRow(feat.row(i));
+						labLeft.takeRow(labels.row(i));
 					}
 					else
 					{
-						featRight.takeRow(feat.removeRow(i));
-						labRight.takeRow(labels.removeRow(i));
+						featRight.takeRow(feat.row(i));
+						labRight.takeRow(labels.row(i));
 					}
 				}
 			}
 			// LeafNode case
-			if(featLeft.rows() == 0 || featRight.rows() == 0)
+			if(featLeft.rows() != 0 && featRight.rows() != 0)
 			{
-				// System.out.println("Bad split");
+				// System.out.println("Found good breaking point");
 				break;//return new LeafNode(labels); // Similar to BaseLineLearner training.
 			}
 		}
 		if(featLeft.rows() == 0 || featRight.rows() == 0)
 		{
-			// System.out.println("Bad split but creating leaf node");
+			System.out.println("Bad split but creating leaf node");
 			return new LeafNode(labels);
 		}
 		// Make the node
@@ -145,10 +153,22 @@ class DecisionTree extends SupervisedLearner
 			// System.out.println("Not breaking in this loop");
 			if(!n.isLeaf()) // This means the Node is an InteriorNode
 			{
-				if(in[n.getAttribute()] < n.getPivot())
-					n = n.getA();
-				else
-					n = n.getB();
+				int vals = this.features.valueCount(n.getAttribute());
+				// TODO: Differentiate between continous/categorical
+				if(vals == 0) // Continous
+				{
+					if(in[n.getAttribute()] < n.getPivot())
+						n = n.getA();
+					else
+						n = n.getB();
+				}
+				else // Categorical
+				{
+					if(in[n.getAttribute()] == n.getPivot())
+						n = n.getA();
+					else
+						n = n.getB();
+				}
 			}
 			else
 			{
