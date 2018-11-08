@@ -38,15 +38,15 @@ abstract class SupervisedLearner
 class DecisionTree extends SupervisedLearner
 {
 	Node root;
-	Matrix features;
-	static Random rand = new Random();
+	Matrix feat;
+	static Random rand = new Random((long)30.0);
 	String name()
 	{
 		return "DecisionTree";
 	}
 	int pickDividingColumn(Matrix feat)
 	{
-		rand.setSeed(25);
+		// rand.setSeed(25);
 		int col = rand.nextInt(feat.cols());
 		return col;
 	}
@@ -68,57 +68,66 @@ class DecisionTree extends SupervisedLearner
 			throw new IllegalArgumentException("Mismatching features and labels");
 		int col = 0; // Continuous or Categorical
 		double pivot = 0.0;
-		this.features = feat;
+		// this.features = new Matrix(feat);
 		// Divide the data.
-		Matrix featLeft = new Matrix(feat);
+		Matrix featLeft = new Matrix();
 		featLeft.copyMetaData(feat);
-		Matrix featRight = new Matrix(feat);
+		Matrix featRight = new Matrix();
 		featRight.copyMetaData(feat);
-		Matrix labLeft = new Matrix(labels);
+		Matrix labLeft = new Matrix();
 		labLeft.copyMetaData(labels);
-		Matrix labRight = new Matrix(labels);
+		Matrix labRight = new Matrix();
 		labRight.copyMetaData(labels);
-		for(int j = 12; j > 0; j--) // This number 8 is subject to change.
+		Matrix featCopy = new Matrix(feat);
+		Matrix labCopy = new Matrix(labels);
+		for(int j = 8; j > 0; j--) // This number 8 is subject to change.
 		{
-			// col = pickDividingColumn(feat);
+			col = pickDividingColumn(feat);
 			pivot = pickPivot(feat, col);
 			int vals = feat.valueCount(col);
 			// Loop to divide data.
-			featLeft = new Matrix(feat);
+			featLeft = new Matrix();
 			featLeft.copyMetaData(feat);
-			featRight = new Matrix(feat);
+
+			featRight = new Matrix();
 			featRight.copyMetaData(feat);
-			labLeft = new Matrix(labels);
+
+			labLeft = new Matrix();
 			labLeft.copyMetaData(labels);
-			labRight = new Matrix(labels);
+
+			labRight = new Matrix();
 			labRight.copyMetaData(labels);
-			for(int i = 0; i < feat.rows(); i++)
+			
+			featCopy.copy(feat);
+			labCopy.copy(labels);
+			int i = 0;
+			while(featCopy.rows() != 0)
 			{	// Continuous
 				if(vals == 0)
 				{
-					if(feat.row(i)[col] < pivot)
+					if(featCopy.row(i)[col] <= pivot)
 					{
-						featLeft.takeRow(feat.row(i));
-						labLeft.takeRow(labels.row(i));
+						featLeft.takeRow(featCopy.removeRow(i));
+						labLeft.takeRow(labCopy.removeRow(i));
 					}
 					else
 					{
-						featRight.takeRow(feat.row(i));
-						labRight.takeRow(labels.row(i));
+						featRight.takeRow(featCopy.removeRow(i));
+						labRight.takeRow(labCopy.removeRow(i));
 					}
 				}
 				else // Categorical
 				{
 					// Divide on categorical values
-					if(feat.row(i)[col] == pivot)
+					if(featCopy.row(i)[col] == pivot)
 					{
-						featLeft.takeRow(feat.row(i));
-						labLeft.takeRow(labels.row(i));
+						featLeft.takeRow(featCopy.removeRow(i));
+						labLeft.takeRow(labCopy.removeRow(i));
 					}
 					else
 					{
-						featRight.takeRow(feat.row(i));
-						labRight.takeRow(labels.row(i));
+						featRight.takeRow(featCopy.removeRow(i));
+						labRight.takeRow(labCopy.removeRow(i));
 					}
 				}
 			}
@@ -131,7 +140,7 @@ class DecisionTree extends SupervisedLearner
 		}
 		if(featLeft.rows() == 0 || featRight.rows() == 0)
 		{
-			System.out.println("Bad split but creating leaf node");
+			// System.out.println("Bad split but creating leaf node");
 			return new LeafNode(labels);
 		}
 		// Make the node
@@ -143,6 +152,7 @@ class DecisionTree extends SupervisedLearner
 	void train(Matrix features, Matrix labels)
 	{
 		// Build a decision tree recursively.
+		this.feat = new Matrix(features);
 		this.root = buildTree(features, labels);
 	}
 	void predict(double[] in, double[] out)
@@ -153,11 +163,11 @@ class DecisionTree extends SupervisedLearner
 			// System.out.println("Not breaking in this loop");
 			if(!n.isLeaf()) // This means the Node is an InteriorNode
 			{
-				int vals = this.features.valueCount(n.getAttribute());
+				int vals = this.feat.valueCount(n.getAttribute());
 				// TODO: Differentiate between continous/categorical
 				if(vals == 0) // Continous
 				{
-					if(in[n.getAttribute()] < n.getPivot())
+					if(in[n.getAttribute()] <= n.getPivot())
 						n = n.getA();
 					else
 						n = n.getB();
@@ -182,6 +192,8 @@ class DecisionTree extends SupervisedLearner
 class RandomForest extends SupervisedLearner
 {
 	DecisionTree[] trees;
+	static Random rand = new Random((long) 25.0);
+	Matrix featRef;
 	RandomForest(int n)
 	{
 		this.trees = new DecisionTree[n];
@@ -192,10 +204,44 @@ class RandomForest extends SupervisedLearner
 	}
 	void train(Matrix features, Matrix labels)
 	{
-
+		featRef = new Matrix(features);
+		for(int i = 0; i < trees.length; i++)
+		{
+			trees[i] = new DecisionTree();
+		}
+		// Generate new training data for each decisiontree by sampling with replacement.
+		// Then train all the trees.
+		for(int i = 0; i < trees.length; i++)
+		{
+			// Take a copy of the features matrix.
+			Matrix currentCopy = new Matrix();
+			currentCopy.copyMetaData(features);
+			Matrix currentLabelsCopy = new Matrix();
+			currentLabelsCopy.copyMetaData(labels);
+			for(int j = 0; j < features.rows(); j++)
+			{
+				int val = rand.nextInt(features.rows());
+				currentCopy.takeRow(features.row(val)); // Grab random rows from features matrix.
+				currentLabelsCopy.takeRow(labels.row(val));
+			}
+			trees[i].train(currentCopy, currentLabelsCopy);
+		}
 	}
 	void predict(double[] in, double[] out)
 	{
-
+		Matrix votes = new Matrix();
+		double[] tempOut = new double[out.length];
+		for(int i = 0; i < trees.length; i++)
+		{
+			trees[i].predict(in, tempOut); // Error, mismatching sizes.
+			votes.takeRow(tempOut);
+		}
+		out = new double[votes.cols()];
+		for(int i = 0; i < votes.cols(); i++)
+		{
+			out[i] = votes.mostCommonValue(i);
+		}
+		// Use some data structure to store the votes of each tree.
+		// Then have some output based on each of the votes.
 	}
 }
