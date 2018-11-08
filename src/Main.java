@@ -100,11 +100,7 @@ class LeafNode extends Node
 	}
 	LeafNode(Matrix Labels)
 	{
-		// System.out.println("Creating new leaf node from Matrix parameter");
-		// TODO: Combine K label vectors into one label vector
-		// TODO: Implementation below is also incorrect.
 		double[] temp = new double[Labels.cols()];
-		// System.out.println("Temp's Length: " + temp.length);
 		for(int i = 0; i < Labels.cols(); i++)
 		{
 			if(Labels.valueCount(i) == 0)
@@ -113,13 +109,6 @@ class LeafNode extends Node
 				temp[i] = Labels.mostCommonValue(i);
 		}
 		this.labels = temp;
-//		for(int i = 0; i < Labels.rows(); i++)
-//		{
-//			// System.out.println("Length of temp is: " + temp.length);
-//			temp = Vec.concatenate(temp, Labels.row(i)); // NOTE: Might be causing the terribleness of my Decision Tree. xD
-//		}
-		// this.labels = temp;
-		// System.out.println("Labels.length = " + this.labels.length);
 	}
 	LeafNode(double[] labs)
 	{

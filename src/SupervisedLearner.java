@@ -3,6 +3,7 @@
 // See http://creativecommons.org/publicdomain/zero/1.0/
 // ----------------------------------------------------------------
 import java.util.Random;
+import java.util.ArrayList;
 abstract class SupervisedLearner
 {
 	/// Return the name of this learner
@@ -72,12 +73,16 @@ class DecisionTree extends SupervisedLearner
 		// Divide the data.
 		Matrix featLeft = new Matrix();
 		featLeft.copyMetaData(feat);
+
 		Matrix featRight = new Matrix();
 		featRight.copyMetaData(feat);
+
 		Matrix labLeft = new Matrix();
 		labLeft.copyMetaData(labels);
+
 		Matrix labRight = new Matrix();
 		labRight.copyMetaData(labels);
+
 		Matrix featCopy = new Matrix(feat);
 		Matrix labCopy = new Matrix(labels);
 		for(int j = 8; j > 0; j--) // This number 8 is subject to change.
@@ -97,7 +102,7 @@ class DecisionTree extends SupervisedLearner
 
 			labRight = new Matrix();
 			labRight.copyMetaData(labels);
-			
+
 			featCopy.copy(feat);
 			labCopy.copy(labels);
 			int i = 0;
@@ -183,6 +188,7 @@ class DecisionTree extends SupervisedLearner
 			else
 			{
 				Vec.copy(out, n.getLabels());
+				// System.out.println(out.length);
 				break;
 				// return n.labels;
 			}
@@ -194,6 +200,7 @@ class RandomForest extends SupervisedLearner
 	DecisionTree[] trees;
 	static Random rand = new Random((long) 25.0);
 	Matrix featRef;
+	Matrix labsRef;
 	RandomForest(int n)
 	{
 		this.trees = new DecisionTree[n];
@@ -205,6 +212,7 @@ class RandomForest extends SupervisedLearner
 	void train(Matrix features, Matrix labels)
 	{
 		featRef = new Matrix(features);
+		labsRef = new Matrix(labels);
 		for(int i = 0; i < trees.length; i++)
 		{
 			trees[i] = new DecisionTree();
@@ -215,8 +223,10 @@ class RandomForest extends SupervisedLearner
 		{
 			// Take a copy of the features matrix.
 			Matrix currentCopy = new Matrix();
+			currentCopy.setSize(features.rows(), features.cols());
 			currentCopy.copyMetaData(features);
 			Matrix currentLabelsCopy = new Matrix();
+			currentLabelsCopy.setSize(labels.rows(), labels.cols());
 			currentLabelsCopy.copyMetaData(labels);
 			for(int j = 0; j < features.rows(); j++)
 			{
@@ -225,19 +235,26 @@ class RandomForest extends SupervisedLearner
 				currentLabelsCopy.takeRow(labels.row(val));
 			}
 			trees[i].train(currentCopy, currentLabelsCopy);
+			// Check the accuracy of each tree.
+			// trees[i].countMisclassifications(features, labels);
 		}
+
 	}
 	void predict(double[] in, double[] out)
 	{
 		Matrix votes = new Matrix();
-		double[] tempOut = new double[out.length];
+		votes.setSize(this.trees.length, labsRef.cols());
+		double[] tempOut = new double[labsRef.cols()];
 		for(int i = 0; i < trees.length; i++)
 		{
-			trees[i].predict(in, tempOut); // Error, mismatching sizes.
+			tempOut = new double[labsRef.cols()];
+			// System.out.println("Temp length: " + tempOut.length);
+			// System.out.println("In length: " + in.length);
+			trees[i].predict(tempOut, in);
 			votes.takeRow(tempOut);
 		}
-		out = new double[votes.cols()];
-		for(int i = 0; i < votes.cols(); i++)
+		// out = new double[this.trees.length];
+		for(int i = 0; i < labsRef.cols(); i++)
 		{
 			out[i] = votes.mostCommonValue(i);
 		}
