@@ -187,6 +187,7 @@ class DecisionTree extends SupervisedLearner
 			}
 			else
 			{
+				// System.out.println(n.getLabels().length);
 				Vec.copy(out, n.getLabels());
 				// System.out.println(out.length);
 				break;
@@ -223,10 +224,8 @@ class RandomForest extends SupervisedLearner
 		{
 			// Take a copy of the features matrix.
 			Matrix currentCopy = new Matrix();
-			currentCopy.setSize(features.rows(), features.cols());
 			currentCopy.copyMetaData(features);
 			Matrix currentLabelsCopy = new Matrix();
-			currentLabelsCopy.setSize(labels.rows(), labels.cols());
 			currentLabelsCopy.copyMetaData(labels);
 			for(int j = 0; j < features.rows(); j++)
 			{
@@ -234,28 +233,36 @@ class RandomForest extends SupervisedLearner
 				currentCopy.takeRow(features.row(val)); // Grab random rows from features matrix.
 				currentLabelsCopy.takeRow(labels.row(val));
 			}
+			// System.out.println(currentCopy.rows() + ", " + currentCopy.cols());
+			// System.out.println(currentLabelsCopy.rows() + ", " + currentLabelsCopy.cols());
+			// System.out.println(features.rows() + ", " + features.cols());
+			// System.out.println(labels.rows() + ", " + labels.cols());
 			trees[i].train(currentCopy, currentLabelsCopy);
 			// Check the accuracy of each tree.
-			// trees[i].countMisclassifications(features, labels);
+			// int r = trees[i].countMisclassifications(features, labels);
+			// System.out.println("Misclassifications from decision tree 1: " + r);
 		}
 
 	}
 	void predict(double[] in, double[] out)
 	{
 		Matrix votes = new Matrix();
-		votes.setSize(this.trees.length, labsRef.cols());
-		double[] tempOut = new double[labsRef.cols()];
+		votes.setSize(0, labsRef.cols());
+		double[] tempOut = new double[out.length];
 		for(int i = 0; i < trees.length; i++)
 		{
-			tempOut = new double[labsRef.cols()];
 			// System.out.println("Temp length: " + tempOut.length);
 			// System.out.println("In length: " + in.length);
-			trees[i].predict(tempOut, in);
-			votes.takeRow(tempOut);
+			trees[i].predict(in, tempOut);
+			// System.out.println(tempOut[0]);
+			votes.takeRow(tempOut); // Needs to also add col.
+			tempOut = new double[tempOut.length];
 		}
+		// System.out.println("Vote rows: " + votes.rows());
 		// out = new double[this.trees.length];
-		for(int i = 0; i < labsRef.cols(); i++)
+		for(int i = 0; i < votes.cols(); i++)
 		{
+			// System.out.println(votes.mostCommonValue(i));
 			out[i] = votes.mostCommonValue(i);
 		}
 		// Use some data structure to store the votes of each tree.
